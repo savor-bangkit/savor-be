@@ -1,7 +1,7 @@
 export class FridgeItem {
   id: string;
-  title: string;
-  details: string;
-  userId: string;
-  createdAt: string;
+  name: string;
+  quantity: number;
+  createDate: Date;
+  daysCountExpire: number;
 }
