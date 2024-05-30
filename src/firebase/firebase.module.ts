@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import { getApps } from 'firebase-admin/app';
 
 const firebaseProvider = {
   provide: 'FIREBASE_APP',
@@ -22,9 +23,11 @@ const firebaseProvider = {
       universe_domain: configService.get<string>('UNIVERSAL_DOMAIN'),
     } as admin.ServiceAccount;
 
-    return admin.initializeApp({
-      credential: admin.credential.cert(firebaseConfig),
-    });
+    if (!getApps().length) {
+      return admin.initializeApp({
+        credential: admin.credential.cert(firebaseConfig),
+      });
+    }
   },
 };
 

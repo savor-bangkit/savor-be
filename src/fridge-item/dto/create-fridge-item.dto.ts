@@ -1,10 +1,6 @@
-import { IsNotEmpty, IsString, IsInt, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt } from 'class-validator';
 
 export class CreateFridgeItemDto {
-  @IsNotEmpty()
-  @IsString()
-  id: string;
-
   @IsNotEmpty()
   @IsString()
   name: string;
@@ -12,10 +8,6 @@ export class CreateFridgeItemDto {
   @IsNotEmpty()
   @IsInt()
   quantity: number;
-
-  @IsNotEmpty()
-  @IsDateString()
-  createDate: string;
 
   @IsNotEmpty()
   @IsInt()

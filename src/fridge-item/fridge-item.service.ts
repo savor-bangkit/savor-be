@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CreateFridgeItemDto } from './create-fridge-item.dto';
-import { UpdateFridgeItemDto } from './update-fridge-item.dto';
+import { CreateFridgeItemDto } from './dto/create-fridge-item.dto';
+import { UpdateFridgeItemDto } from './dto/update-fridge-item.dto';
 import { firestore } from 'firebase-admin';
 import { REQUEST } from '@nestjs/core';
 import { FridgeItem } from './fridge-item.entity';
@@ -17,9 +17,11 @@ export class FridgeItemService {
 
   async create(createFridgeItemDto: CreateFridgeItemDto) {
     const userId = this.request.user.uid;
+    const createdAt = new Date();
     const fridgeItem: Omit<FridgeItem, 'id'> = {
       ...createFridgeItemDto,
       userId,
+      createdAt,
     };
 
     return this.collection.add(fridgeItem).then((doc) => {
