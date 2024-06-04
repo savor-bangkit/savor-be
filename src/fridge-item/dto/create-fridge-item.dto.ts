@@ -7,9 +7,5 @@ export class CreateFridgeItemDto {
 
   @IsNotEmpty()
   @IsInt()
-  quantity: number;
-
-  @IsNotEmpty()
-  @IsInt()
   daysCountExpire: number;
 }
