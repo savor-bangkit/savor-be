@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateFridgeItemDto } from './dto/create-fridge-item.dto';
-import { UpdateFridgeItemDto } from './dto/update-fridge-item.dto';
 import { firestore } from 'firebase-admin';
 import { REQUEST } from '@nestjs/core';
 import { FridgeItem } from './fridge-item.entity';
 import DocumentSnapshot = firestore.DocumentSnapshot;
 import QuerySnapshot = firestore.QuerySnapshot;
+import { FridgeItemDTO } from './dto/fridge-item.dto';
 
 @Injectable()
 export class FridgeItemService {
@@ -15,17 +15,37 @@ export class FridgeItemService {
     this.collection = firestore().collection('fridge-items');
   }
 
+  private getExpiryDays(category: string): number {
+    const expiryMap = {
+      APPLE: 7,
+      BANANA: 3,
+      FISH: 4,
+      EGG: 21,
+      CUCUMBER: 7,
+      SPINACH: 6,
+      CHICKEN: 2,
+    };
+    return expiryMap[category.toUpperCase()] || 0;
+  }
+
   async create(createFridgeItemDto: CreateFridgeItemDto) {
     const userId = this.request.user.uid;
     const createdAt = new Date();
+    const daysCountExpire = this.getExpiryDays(createFridgeItemDto.category);
+
     const fridgeItem: Omit<FridgeItem, 'id'> = {
       ...createFridgeItemDto,
       userId,
       createdAt,
+      daysCountExpire,
     };
 
     return this.collection.add(fridgeItem).then((doc) => {
-      return { id: doc.id, ...fridgeItem };
+      const addedItem = {
+        id: doc.id,
+        ...fridgeItem,
+      };
+      return new FridgeItemDTO(addedItem);
     });
   }
 
@@ -38,9 +58,12 @@ export class FridgeItemService {
           return [];
         }
 
-        const fridgeItems: FridgeItem[] = [];
+        const fridgeItems: FridgeItemDTO[] = [];
         for (const doc of querySnapshot.docs) {
-          fridgeItems.push(this.transformFridgeItem(doc));
+          const fridgeItem = doc.data();
+          fridgeItem.id = doc.id;
+          const transformedItem = new FridgeItemDTO(fridgeItem);
+          fridgeItems.push(transformedItem);
         }
 
         return fridgeItems;
@@ -51,35 +74,18 @@ export class FridgeItemService {
     return this.collection
       .doc(id)
       .get()
-      .then((querySnapshot: DocumentSnapshot<FridgeItem>) => {
-        return this.transformFridgeItem(querySnapshot);
-      });
-  }
+      .then((docSnapshot: DocumentSnapshot<FridgeItem>) => {
+        if (!docSnapshot.exists) {
+          throw new Error('FridgeItem not found');
+        }
 
-  async update(id: string, updateFridgeItemDto: UpdateFridgeItemDto) {
-    const updateData: { [key: string]: any } = { ...updateFridgeItemDto };
-    await this.collection.doc(id).update(updateData);
+        const fridgeItem = docSnapshot.data() as FridgeItem;
+        fridgeItem.id = docSnapshot.id;
+        return new FridgeItemDTO(fridgeItem);
+      });
   }
 
   async delete(id: string) {
     await this.collection.doc(id).delete();
-  }
-
-  private transformFridgeItem(querySnapshot: DocumentSnapshot<FridgeItem>) {
-    if (!querySnapshot.exists) {
-      throw new Error(`No fridge item found with the given id`);
-    }
-
-    const fridgeItem = querySnapshot.data();
-    const userId = this.request.user.uid;
-
-    if (fridgeItem.userId !== userId) {
-      throw new Error(`No fridge item found with the given id`);
-    }
-
-    return {
-      id: querySnapshot.id,
-      ...fridgeItem,
-    };
   }
 }

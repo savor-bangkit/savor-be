@@ -4,13 +4,11 @@ import {
   Delete,
   Get,
   Param,
-  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { FridgeItemService } from './fridge-item.service';
 import { CreateFridgeItemDto } from './dto/create-fridge-item.dto';
-import { UpdateFridgeItemDto } from './dto/update-fridge-item.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @UseGuards(AuthGuard())
@@ -31,14 +29,6 @@ export class FridgeItemController {
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.fridgeItemService.getById(id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateFridgeItemDto: UpdateFridgeItemDto,
-  ) {
-    return this.fridgeItemService.update(id, updateFridgeItemDto);
   }
 
   @Delete(':id')
