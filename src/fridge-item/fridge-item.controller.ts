@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { FridgeItemService } from './fridge-item.service';
@@ -22,7 +23,10 @@ export class FridgeItemController {
   }
 
   @Get()
-  getAll() {
+  getAll(@Query('upcoming') upcoming?: boolean) {
+    if (upcoming) {
+      return this.fridgeItemService.getUpcomingExpiration();
+    }
     return this.fridgeItemService.getAll();
   }
 

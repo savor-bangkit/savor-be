@@ -49,9 +49,10 @@ export class FridgeItemService {
     });
   }
 
-  getAll() {
+  async getAll() {
     return this.collection
       .where('userId', '==', this.request.user.uid)
+      .orderBy('createdAt', 'desc')
       .get()
       .then((querySnapshot: QuerySnapshot<FridgeItem>) => {
         if (querySnapshot.empty) {
@@ -70,7 +71,7 @@ export class FridgeItemService {
       });
   }
 
-  getById(id: string) {
+  async getById(id: string) {
     return this.collection
       .doc(id)
       .get()
@@ -87,5 +88,39 @@ export class FridgeItemService {
 
   async delete(id: string) {
     await this.collection.doc(id).delete();
+  }
+
+  async getUpcomingExpiration() {
+    return this.collection
+      .where('userId', '==', this.request.user.uid)
+      .get()
+      .then((querySnapshot: QuerySnapshot<FridgeItem>) => {
+        if (querySnapshot.empty) {
+          return [];
+        }
+
+        const fridgeItems: FridgeItemDTO[] = [];
+        const threeDaysFromNow = new Date();
+        threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+
+        for (const doc of querySnapshot.docs) {
+          const fridgeItem = doc.data();
+          fridgeItem.id = doc.id;
+          const transformedItem = new FridgeItemDTO(fridgeItem);
+          const createdAtDate = new Date(transformedItem.createdAt);
+          const expirationDate = new Date(
+            createdAtDate.getTime() +
+              transformedItem.daysCountExpire * 24 * 60 * 60 * 1000,
+          );
+          if (
+            expirationDate <= threeDaysFromNow &&
+            expirationDate >= new Date()
+          ) {
+            fridgeItems.push(transformedItem);
+          }
+        }
+        fridgeItems.sort((a, b) => a['countDownDays'] - b['countDownDays']);
+        return fridgeItems;
+      });
   }
 }
